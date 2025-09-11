@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'recetas_page.dart';
+import 'home_page.dart';
 
 void main() {
   runApp(MyApp());
@@ -11,7 +11,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'App de Recetas',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: RecetasPage(),
+      home: HomePage(),
+      debugShowCheckedModeBanner: false, // Esta línea desactiva el banner de debug
     );
   }
 }

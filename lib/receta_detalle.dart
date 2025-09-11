@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'receta.dart';
 
-class RecetaDetallePage extends StatelessWidget {
+class RecetaDetalle extends StatelessWidget {
   final Receta receta;
 
-  RecetaDetallePage({required this.receta});
+  const RecetaDetalle({Key? key, required this.receta}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(receta.nombre)),
+      appBar: AppBar(
+        title: Text(receta.nombre),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(

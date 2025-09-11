@@ -4,27 +4,40 @@ import 'receta.dart';
 import 'receta_detalle.dart';
 
 class RecetasPage extends StatefulWidget {
+  final Function(Receta) onToggleFavorite;
+  final Function(List<Receta>) onRecetasLoaded;
+  final List<Receta> recetas;
+
+  const RecetasPage({
+    Key? key,
+    required this.onToggleFavorite,
+    required this.onRecetasLoaded,
+    required this.recetas,
+  }) : super(key: key);
+
   @override
   _RecetasPageState createState() => _RecetasPageState();
 }
 
 class _RecetasPageState extends State<RecetasPage> {
   final ApiService api = ApiService();
-  List<Receta> recetas = [];
-  List<Receta> recetasFiltradas = [];
+  late List<Receta> recetasFiltradas;
   TextEditingController controller = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    cargarRecetas();
+    recetasFiltradas = widget.recetas;
+    if (widget.recetas.isEmpty) {
+      cargarRecetas();
+    }
   }
 
   void cargarRecetas() async {
     try {
       final data = await api.getRecetas();
+      widget.onRecetasLoaded(data);
       setState(() {
-        recetas = data;
         recetasFiltradas = data;
       });
     } catch (e) {
@@ -35,7 +48,7 @@ class _RecetasPageState extends State<RecetasPage> {
   }
 
   void filtrar(String query) {
-    final filtradas = recetas
+    final filtradas = widget.recetas
         .where((r) => r.nombre.toLowerCase().contains(query.toLowerCase()))
         .toList();
 
@@ -69,11 +82,18 @@ class _RecetasPageState extends State<RecetasPage> {
                 final receta = recetasFiltradas[index];
                 return ListTile(
                   title: Text(receta.nombre),
+                  trailing: IconButton(
+                    icon: Icon(
+                      receta.isFavorite ? Icons.favorite : Icons.favorite_border,
+                      color: receta.isFavorite ? Colors.red : null,
+                    ),
+                    onPressed: () => widget.onToggleFavorite(receta),
+                  ),
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => RecetaDetallePage(receta: receta),
+                        builder: (context) => RecetaDetalle(receta: receta),  // Make sure this matches the actual class name
                       ),
                     );
                   },

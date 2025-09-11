@@ -17,12 +17,14 @@ class Receta {
   final String nombre;
   final List<Ingrediente> ingredientes;
   final String instrucciones;
+  bool isFavorite;
 
   Receta({
     required this.id,
     required this.nombre,
     required this.ingredientes,
     required this.instrucciones,
+    this.isFavorite = false,
   });
 
   factory Receta.fromJson(Map<String, dynamic> json) {

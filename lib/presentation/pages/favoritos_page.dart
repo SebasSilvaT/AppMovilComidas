@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'receta.dart';
-import 'receta_detalle.dart';
+import '../../domain/entities/receta.dart';
+import '../../core/config/dependency_injection.dart';
+import 'receta_detalle_page.dart';
 
-class FavoritosPage extends StatelessWidget {
+class FavoritosPage extends StatefulWidget {
   final List<Receta> recetas;
   final Function(Receta) onToggleFavorite;
 
@@ -13,8 +14,15 @@ class FavoritosPage extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<FavoritosPage> createState() => _FavoritosPageState();
+}
+
+class _FavoritosPageState extends State<FavoritosPage> {
+  final _manageFavoritosUseCase = DependencyInjection.manageFavoritosUseCase;
+
+  @override
   Widget build(BuildContext context) {
-    final recetasFavoritas = recetas.where((r) => r.isFavorite).toList();
+    final recetasFavoritas = widget.recetas.where((r) => r.isFavorite).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -38,13 +46,26 @@ class FavoritosPage extends StatelessWidget {
                       Icons.favorite,
                       color: Colors.red,
                     ),
-                    onPressed: () => onToggleFavorite(receta),
+                    onPressed: () async {
+                      try {
+                        await _manageFavoritosUseCase.eliminarFavorito(receta.id);
+                        widget.onToggleFavorite(receta);
+                      } catch (e) {
+                        print('Error al cambiar favorito: $e');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error al actualizar favorito')),
+                        );
+                      }
+                    },
                   ),
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => RecetaDetalle(receta: receta),
+                        builder: (context) => RecetaDetallePage(
+                          receta: receta,
+                          onToggleFavorite: widget.onToggleFavorite,
+                        ),
                       ),
                     );
                   },

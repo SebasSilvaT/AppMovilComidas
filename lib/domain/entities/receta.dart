@@ -1,16 +1,4 @@
-class Ingrediente {
-  final String nombre;
-  final String cantidad;
-
-  Ingrediente({required this.nombre, required this.cantidad});
-
-  factory Ingrediente.fromJson(Map<String, dynamic> json) {
-    return Ingrediente(
-      nombre: json['nombre'],
-      cantidad: json['cantidad'],
-    );
-  }
-}
+import 'ingrediente.dart';
 
 class Receta {
   final int id;
@@ -38,5 +26,14 @@ class Receta {
       ingredientes: ingredientesList,
       instrucciones: json['instrucciones'],
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'nombre': nombre,
+      'ingredientes': ingredientes.map((i) => i.toJson()).toList(),
+      'instrucciones': instrucciones,
+    };
   }
 }

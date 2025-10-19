@@ -1,61 +1,70 @@
 import 'package:flutter/material.dart';
-import 'receta.dart';
-import 'database_helper.dart';
+import '../../domain/entities/receta.dart';
+import '../../core/config/dependency_injection.dart';
 
-class RecetaDetalle extends StatefulWidget {
+class RecetaDetallePage extends StatefulWidget {
   final Receta receta;
+  final Function(Receta) onToggleFavorite;
 
-  const RecetaDetalle({Key? key, required this.receta}) : super(key: key);
+  const RecetaDetallePage({
+    Key? key, 
+    required this.receta,
+    required this.onToggleFavorite,
+  }) : super(key: key);
 
   @override
-  State<RecetaDetalle> createState() => _RecetaDetalleState();
+  State<RecetaDetallePage> createState() => _RecetaDetallePageState();
 }
 
-class _RecetaDetalleState extends State<RecetaDetalle> {
+class _RecetaDetallePageState extends State<RecetaDetallePage> {
   final Set<int> _ingredientesSeleccionados = {};
-  final DatabaseHelper _dbHelper = DatabaseHelper();
   bool _esFavorito = false;
+
+  final _manageFavoritosUseCase = DependencyInjection.manageFavoritosUseCase;
+  final _manageListaComprasUseCase = DependencyInjection.manageListaComprasUseCase;
 
   @override
   void initState() {
     super.initState();
+    _esFavorito = widget.receta.isFavorite;
     _cargarEsFavorito();
   }
 
   Future<void> _cargarEsFavorito() async {
-    final esFav = await _dbHelper.esFavorito(widget.receta.id);
-    setState(() {
-      _esFavorito = esFav;
-    });
-  }
-
-  Future<void> _toggleFavorito() async {
-    setState(() {
-      _esFavorito = !_esFavorito;
-    });
-
-    if (_esFavorito) {
-      await _dbHelper.agregarFavorito(widget.receta.id);
-    } else {
-      await _dbHelper.eliminarFavorito(widget.receta.id);
+    try {
+      final esFav = await _manageFavoritosUseCase.esFavorito(widget.receta.id);
+      if (mounted) {
+        setState(() {
+          _esFavorito = esFav;
+          widget.receta.isFavorite = esFav;
+        });
+      }
+    } catch (e) {
+      print('Error al cargar favorito: $e');
     }
   }
 
-  Future<void> _guardarIngredientesSeleccionados() async {
+  Future<void> _toggleFavorito() async {
     try {
-      // Primero limpiamos los ingredientes anteriores de esta receta
-      await Future.forEach(_ingredientesSeleccionados, (int index) async {
-        final ingrediente = widget.receta.ingredientes[index];
-        await _dbHelper.agregarIngredienteALista(
-          widget.receta.id,
-          ingrediente.nombre,
-          ingrediente.cantidad,
-        );
+      setState(() {
+        _esFavorito = !_esFavorito;
       });
+
+      if (_esFavorito) {
+        await _manageFavoritosUseCase.agregarFavorito(widget.receta.id);
+      } else {
+        await _manageFavoritosUseCase.eliminarFavorito(widget.receta.id);
+      }
+
+      widget.receta.isFavorite = _esFavorito;
+      widget.onToggleFavorite(widget.receta);
     } catch (e) {
-      print('Error al guardar ingredientes: $e');
+      print('Error al cambiar favorito: $e');
+      setState(() {
+        _esFavorito = !_esFavorito;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al guardar la lista de compras')),
+        SnackBar(content: Text('Error al actualizar favorito')),
       );
     }
   }
@@ -67,7 +76,7 @@ class _RecetaDetalleState extends State<RecetaDetalle> {
         return AlertDialog(
           title: Text('Lista de Compras'),
           content: FutureBuilder<List<Map<String, dynamic>>>(
-            future: _dbHelper.obtenerListaCompras(),
+            future: _manageListaComprasUseCase.obtenerListaCompras(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Center(child: CircularProgressIndicator());
@@ -121,14 +130,12 @@ class _RecetaDetalleState extends State<RecetaDetalle> {
             ),
             onPressed: _toggleFavorito,
           ),
-          if (_ingredientesSeleccionados.isNotEmpty)
-            IconButton(
-              icon: Icon(Icons.list),
-              onPressed: () async {
-                await _guardarIngredientesSeleccionados();
-                _mostrarListaCompras(context);
-              },
-            ),
+          IconButton(
+            icon: Icon(Icons.shopping_cart),
+            onPressed: () {
+              _mostrarListaCompras(context);
+            },
+          ),
         ],
       ),
       body: Padding(
@@ -151,8 +158,15 @@ class _RecetaDetalleState extends State<RecetaDetalle> {
                       setState(() {
                         if (value == true) {
                           _ingredientesSeleccionados.add(index);
+                          _manageListaComprasUseCase.agregarAListaCompras(
+                            widget.receta.id,
+                            [ingrediente],
+                          );
                         } else {
                           _ingredientesSeleccionados.remove(index);
+                          _manageListaComprasUseCase.eliminarDeListaCompras(
+                            ingrediente.nombre,
+                          );
                         }
                       });
                     } catch (e) {

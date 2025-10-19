@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'receta.dart';
+import '../../domain/entities/receta.dart';
 
-class ApiService {
+/// Remote data source for fetching recipes from API
+class RecetaRemoteDataSource {
   static const String baseUrl = "http://10.0.2.2:3000";
 
   Future<List<Receta>> getRecetas() async {

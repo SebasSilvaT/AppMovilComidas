@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import 'home_page.dart';
-import 'database_helper.dart';
+import 'presentation/pages/home_page.dart';
+import 'core/config/dependency_injection.dart';
 
 void main() async {
   // Ensure Flutter bindings are initialized
   WidgetsFlutterBinding.ensureInitialized();
   
   try {
-    // Initialize database
-    await DatabaseHelper.initializeDatabase();
+    // Initialize dependencies
+    await DependencyInjection.initialize();
     runApp(MyApp());
   } catch (e) {
-    print('Error initializing database: $e');
+    print('Error initializing app: $e');
     runApp(MyApp()); // Run the app anyway to show error messages to user
   }
 }

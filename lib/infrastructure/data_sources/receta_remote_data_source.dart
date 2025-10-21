@@ -4,7 +4,7 @@ import '../../domain/entities/receta.dart';
 
 /// Remote data source for fetching recipes from API
 class RecetaRemoteDataSource {
-  static const String baseUrl = "http://10.0.2.2:3000";
+  static const String baseUrl = "https://api-comidas.onrender.com";
 
   Future<List<Receta>> getRecetas() async {
     final response = await http.get(Uri.parse("$baseUrl/recetas"));
